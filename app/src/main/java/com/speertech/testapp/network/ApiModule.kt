@@ -1,5 +1,6 @@
-package com.silverorange.videoplayer.network
+package com.speertech.testapp.network
 
+import com.speertech.testapp.repository.RepositoryImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
