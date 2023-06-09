@@ -3,15 +3,18 @@ package com.speertech.testapp.model
 import com.google.gson.annotations.SerializedName
 
 data class User (
-
+    @SerializedName("login")
     val username: String,
+    @SerializedName("id")
+    val id: Int,
     @SerializedName("avatar_url")
     val avatar: String,
     @SerializedName("name")
     val name: String,
-    val description: String,
+    @SerializedName("bio")
+    val bio: String,
     @SerializedName("followers")
-    val followers: String,
+    val followers: Int,
     @SerializedName("following")
-    val following: String,
+    val following: Int,
 )
