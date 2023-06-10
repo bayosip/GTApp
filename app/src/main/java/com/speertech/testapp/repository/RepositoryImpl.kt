@@ -33,7 +33,7 @@ class RepositoryImpl @Inject constructor(private val service: ApiService) : Repo
         TODO("Not yet implemented")
     }
 
-    private suspend fun getSearchResults(username: String): Flow<Resource<SearchResults>> = flow{
+    suspend fun getSearchResults(username: String): Flow<Resource<SearchResults>> = flow{
         val response = getSearchResultsOf(username)
         when (response.status) {
             Resource.STATUS.SUCCESS -> {
@@ -48,30 +48,14 @@ class RepositoryImpl @Inject constructor(private val service: ApiService) : Repo
     }
 
     override suspend fun getUserSearchResult(username: String):
-            Flow<Resource<PagingData<FollowModel>?>> {
-        var pageData: Flow<Resource<PagingData<FollowModel>?>> = flow { emit(Resource.loading())}
-        getSearchResults(username).collectLatest { result ->
-            when (result.status) {
-                Resource.STATUS.SUCCESS -> {
-                    if (result.data != null && result.data.users?.isEmpty() == false) {
-                        pageData = Pager(
-                            config = PagingConfig(
-                                pageSize = 20,
-                            ),
-                            pagingSourceFactory = {
-                                SearchPagingSource(result.data.users)
-                            }
-                        ).flow.map {
-                            Resource.success(it)
-                        }
-                    }
-                    else pageData = flow { emit(Resource.error(message = "Request Error...")) }
-                }
-                Resource.STATUS.ERROR -> pageData = flow { emit(Resource.error(message = "Request Error...")) }
-                Resource.STATUS.LOADING -> pageData = flow { emit(Resource.loading())}
+            Flow<PagingData<FollowModel>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 20,
+            ),
+            pagingSourceFactory = {
+                SearchPagingSource(this@RepositoryImpl, username)
             }
-        }
-        return pageData
+        ).flow
     }
-
 }

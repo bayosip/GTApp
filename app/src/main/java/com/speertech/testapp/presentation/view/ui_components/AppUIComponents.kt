@@ -5,21 +5,34 @@ import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Card
+import androidx.compose.material.Divider
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.ListItem
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ImageSearch
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.PersonSearch
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -43,10 +56,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.silverorange.videoplayer.R
 import com.speertech.testapp.GTApp
+import com.speertech.testapp.model.FollowModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -75,8 +91,11 @@ fun SearchButton(
 fun SearchTextField(
     hint: String,
     fieldValue: MutableState<String>,
-    action: () -> Unit,
+    action: (txt: String) -> Unit,
 ) {
+    val lightBlue = Color(0xffd8e6ff)
+    val blue = Color(0xff1aa7ec)
+
     TextField(
         maxLines = 1,
         value = fieldValue.value ?: "",
@@ -87,62 +106,51 @@ fun SearchTextField(
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(
             onDone = {
-                action()
+                action(fieldValue.value)
             }
         ),
         modifier = Modifier
             .fillMaxWidth()
+            .height(75.dp)
             .onKeyEvent {
-            if (it.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_ENTER){
-                //focusRequester.requestFocus()
-                action()
-                true
-            }
-            false
-        },
+                if (it.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_ENTER) {
+                    //focusRequester.requestFocus()
+                    action(fieldValue.value)
+                    true
+                }
+                false
+            },
         label = {
             Text(
                 text = hint,
-                fontSize = 16.sp,
+                fontSize = 8.sp,
             )
         },
         shape = RoundedCornerShape(8.dp),
         trailingIcon = {
-            Icon(
-                painter = painterResource(id = R.drawable.github),
-                "search",
-                tint = Blue
-            )
-        },
-    )
-}
-
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-fun ListContainer(list: List<T>){
-    val refreshScope = rememberCoroutineScope()
-    var refreshing by remember { mutableStateOf(false) }
-    val state = rememberPullRefreshState(refreshing, ::refresh)
-
-    Box(Modifier.pullRefresh(state)) {
-        LazyColumn(Modifier.fillMaxSize()) {
-            if (!refreshing) {
-                items(list.size) {
-                    ListItem { Text(text = "Item ${list.size - it}") }
+            if (fieldValue.value.isNotEmpty()) {
+                IconButton(onClick = { fieldValue.value = "" }) {
+                    Icon(
+                        imageVector = Icons.Outlined.Close,
+                        contentDescription = null,
+                        tint = blue
+                    )
                 }
+            } else {
+                Icon(
+                    imageVector = Icons.Outlined.PersonSearch,
+                    contentDescription = "Search",
+                    tint = blue,
+                )
             }
-        }
-        PullRefreshIndicator(refreshing, state, Modifier.align(Alignment.TopCenter))
-    }
-
-    LaunchedEffect(key1 = true ) {
-        refreshScope.launch {
-            refreshing = true
-            delay(1500)
-//        itemCount += 5
-            refreshing = false
-        }
-    }
+        },
+        colors = TextFieldDefaults.textFieldColors(
+            backgroundColor = lightBlue,
+            cursorColor = Color.Black,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent
+        ),
+    )
 }
 
 @Composable
@@ -158,6 +166,49 @@ fun InfoText(
         color = Color.DarkGray,
         modifier = modifier
     )
+}
+
+@Composable
+fun SearchResultListItem(
+    item: FollowModel,
+    onItemClicked: (username: String) -> Unit,
+) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+    ) {
+        Card(
+            shape = RoundedCornerShape(8.dp),
+            backgroundColor = Color.White,
+            elevation = 2.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp)
+                .clickable { onItemClicked(item.username) }
+        ) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                AsyncImage(
+                    modifier = Modifier
+                        .size(88.dp)
+                        .padding(start = 16.dp, top = 16.dp, bottom = 16.dp),
+                    model = item.avatar,
+                    contentDescription = "avatar thumbnail",
+                )
+                Text(
+                    modifier = Modifier.padding(start = 16.dp),
+                    text = item.username,
+                    textAlign = TextAlign.Start,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.caption,
+                    maxLines = 1
+                )
+            }
+        }
+        Divider(modifier = Modifier.height(3.dp))
+    }
+
 }
 
 fun Modifier.onClick(

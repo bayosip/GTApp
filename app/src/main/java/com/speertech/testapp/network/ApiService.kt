@@ -5,7 +5,9 @@ import com.speertech.testapp.model.SearchResults
 import com.speertech.testapp.model.User
 import retrofit2.Response
 import retrofit2.http.GET
+import retrofit2.http.Headers
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ApiService {
 
@@ -16,11 +18,16 @@ interface ApiService {
     fun getUser(@Path("user") user: String?): Response<User?>
 
     @GET("/users/{user}/followers")
-    fun getFollowers(@Path("user")user: String?):Response<List<FollowModel>?>
+    fun getFollowers(@Path("user") user: String?): Response<List<FollowModel>?>
 
     @GET("/users/{user}/following")
-    fun getFollowing(@Path("user")user: String?):Response<List<FollowModel>?>
+    fun getFollowing(@Path("user") user: String?): Response<List<FollowModel>?>
 
     @GET("/search/users")
-    fun searchForUser(user: String?): Response<SearchResults?>
+    @Headers("Authorization: token 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")
+    fun searchForUser(
+        @Query("q") user: String?,
+        @Query("page") currentPage: Int = 1,
+        @Query("per_page")per_page: Int = 20,
+    ): Response<SearchResults?>
 }

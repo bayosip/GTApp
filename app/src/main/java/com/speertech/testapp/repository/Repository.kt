@@ -11,5 +11,5 @@ interface Repository {
 
     suspend fun getFollows(user: String, follow_designation:Int): Flow<Resource<List<FollowModel>?>>
     suspend fun getUser(user: String): Flow<Resource<User?>>
-    suspend fun getUserSearchResult(username: String): Flow<Resource<PagingData<FollowModel>?>>
+    suspend fun getUserSearchResult(username: String): Flow<PagingData<FollowModel>>
 }

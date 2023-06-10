@@ -1,17 +1,20 @@
 package com.speertech.testapp.presentation.view.toolbar
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
@@ -21,12 +24,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,8 +45,8 @@ import com.speertech.testapp.presentation.view.screens.ScreenNames
 import com.speertech.testapp.presentation.view.ui_components.SearchTextField
 import java.lang.Float.max
 
-val COLLAPSED_TOP_BAR_HEIGHT = 56.dp
-val EXPANDED_TOP_BAR_HEIGHT = 350.dp
+val COLLAPSED_TOP_BAR_HEIGHT = 90.dp
+val EXPANDED_TOP_BAR_HEIGHT = 550.dp
 
 @Composable
 fun AppToolBar(
@@ -48,8 +54,8 @@ fun AppToolBar(
     currentScreen: String,
     user: User? = null,
     scrollOffset: Float = 0f,
-    isSearchCollapsed: Boolean,
-    action: () -> Unit,
+    searchStarted: State<Boolean>,
+    searchAction: (input: String) -> Unit,
 ) {
     val input = remember {
         mutableStateOf("")
@@ -65,7 +71,10 @@ fun AppToolBar(
                 }
 
                 ScreenNames.SEARCH -> {
-                    ExpandedTopBar(input = input, action = action)
+                    SearchToolBar(
+                        input = input,
+                        searchAction = searchAction
+                    )
                 }
 
                 else -> {
@@ -86,7 +95,8 @@ fun AppToolBar(
 
             }
         },
-        backgroundColor = Color.Green,
+        backgroundColor = Color.White,
+        elevation = if (searchStarted.value) 4.dp else 0.dp,
         navigationIcon = {
             if (currentScreen != ScreenNames.SEARCH) {
                 IconButton(onClick = {
@@ -104,21 +114,21 @@ fun AppToolBar(
 }
 
 @Composable
-fun ResultToolBar(
+fun SearchToolBar(
     input: MutableState<String>,
-    action: () -> Unit,
+    searchAction: (input: String) -> Unit,
 ) {
     Row(
         modifier = Modifier
-            .background(Color.White)
             .fillMaxWidth()
-            .wrapContentHeight(),
+            .wrapContentHeight()
+            .padding(8.dp),
         horizontalArrangement = Arrangement.Center,
     ) {
         SearchTextField(
             hint = "Search User",
             fieldValue = input,
-            action = action,
+            action = searchAction,
         )
     }
 }
@@ -126,16 +136,46 @@ fun ResultToolBar(
 @Composable
 private fun ExpandedTopBar(
     input: MutableState<String>,
-    action: () -> Unit,
+    action: (input: String) -> Unit,
+    searchStarted: State<Boolean>,
 ) {
+
+    val density = LocalDensity.current
+    val heightInDp = animateDpAsState(
+        targetValue = if (!searchStarted.value) with(density) { EXPANDED_TOP_BAR_HEIGHT } else COLLAPSED_TOP_BAR_HEIGHT,
+        animationSpec = tween(
+            durationMillis = 1000,
+        )
+    )
     Box(
         modifier = Modifier
             .background(Color.White)
             .fillMaxWidth()
-            .height(EXPANDED_TOP_BAR_HEIGHT - COLLAPSED_TOP_BAR_HEIGHT),
+            .height(heightInDp.value),
         contentAlignment = Alignment.BottomCenter
     ) {
-        ResultToolBar(input = input, action = action)
+
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            if (!searchStarted.value) {
+                Image(
+                    modifier = Modifier
+                        .size(200.dp)
+                        .padding(8.dp)
+                        .clip(RoundedCornerShape(10.dp)),
+                    painter = painterResource(id = R.drawable.speer),
+                    contentDescription = "app",
+                )
+            }
+            SearchToolBar(
+                input = input,
+                searchAction = action
+            )
+        }
+
     }
 }
 

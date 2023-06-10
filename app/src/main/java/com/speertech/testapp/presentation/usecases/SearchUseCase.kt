@@ -11,8 +11,6 @@ import javax.inject.Inject
 class SearchUseCase @Inject constructor(
 private val repository: RepositoryImpl
 ) {
-    suspend operator fun invoke(username:String): Flow<Resource<PagingData<FollowModel>?>> =
+    suspend operator fun invoke(username:String): Flow<PagingData<FollowModel>> =
         repository.getUserSearchResult(username)
-
-
 }
