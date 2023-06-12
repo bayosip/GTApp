@@ -133,9 +133,8 @@ fun SearchResultList(
                     ) {
                         Text(text = "Pagination Loading")
 
-                        CircularProgressIndicator(
+                        CircularProgressIndicator(color = Color.Blue,
                             modifier = Modifier
-                                .background(Color.Blue)
                                 .padding(16.dp)
                         )
                     }
