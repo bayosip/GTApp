@@ -1,31 +1,26 @@
 package com.speertech.testapp.presentation.view.ui_components
 
 import android.view.KeyEvent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
-import androidx.compose.material.Divider
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.ListItem
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
@@ -33,23 +28,16 @@ import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.PersonSearch
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.Blue
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
@@ -63,8 +51,6 @@ import coil.compose.AsyncImage
 import com.silverorange.videoplayer.R
 import com.speertech.testapp.GTApp
 import com.speertech.testapp.model.FollowModel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
 fun SearchButton(
@@ -95,7 +81,7 @@ fun SearchTextField(
 ) {
     val lightBlue = Color(0xffd8e6ff)
     val blue = Color(0xff1aa7ec)
-
+    val focusManager = LocalFocusManager.current
     TextField(
         maxLines = 1,
         value = fieldValue.value ?: "",
@@ -107,11 +93,13 @@ fun SearchTextField(
         keyboardActions = KeyboardActions(
             onDone = {
                 action(fieldValue.value)
+                focusManager.clearFocus()
             }
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .height(75.dp)
+            .wrapContentHeight()
+            .padding(8.dp)
             .onKeyEvent {
                 if (it.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_ENTER) {
                     //focusRequester.requestFocus()
@@ -123,7 +111,7 @@ fun SearchTextField(
         label = {
             Text(
                 text = hint,
-                fontSize = 8.sp,
+                fontSize = 12.sp,
             )
         },
         shape = RoundedCornerShape(8.dp),
@@ -169,44 +157,41 @@ fun InfoText(
 }
 
 @Composable
-fun SearchResultListItem(
+fun UserResultListItem(
     item: FollowModel,
     onItemClicked: (username: String) -> Unit,
 ) {
-    Column(
-        Modifier
+
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        backgroundColor = Color.White,
+        elevation = 2.dp,
+        modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp)
+            .clickable { onItemClicked(item.username) }
     ) {
-        Card(
-            shape = RoundedCornerShape(8.dp),
-            backgroundColor = Color.White,
-            elevation = 2.dp,
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp)
-                .clickable { onItemClicked(item.username) }
-        ) {
-            Row(modifier = Modifier.fillMaxWidth()) {
-                AsyncImage(
-                    modifier = Modifier
-                        .size(88.dp)
-                        .padding(start = 16.dp, top = 16.dp, bottom = 16.dp),
-                    model = item.avatar,
-                    contentDescription = "avatar thumbnail",
-                )
-                Text(
-                    modifier = Modifier.padding(start = 16.dp),
-                    text = item.username,
-                    textAlign = TextAlign.Start,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.caption,
-                    maxLines = 1
-                )
-            }
+        Row(modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically) {
+            AsyncImage(
+                modifier = Modifier
+                    .size(88.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .padding(start = 16.dp, top = 16.dp, bottom = 16.dp),
+                model = item.avatar,
+                contentDescription = "avatar thumbnail",
+            )
+            Text(
+                modifier = Modifier.padding(start = 16.dp),
+                text = item.username,
+                textAlign = TextAlign.Start,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.caption,
+                maxLines = 1
+            )
         }
-        Divider(modifier = Modifier.height(3.dp))
     }
 
 }
@@ -238,4 +223,25 @@ fun Modifier.onClick(
         indication = LocalIndication.current,
         interactionSource = remember { MutableInteractionSource() }
     )
+}
+
+@Composable
+fun ErrorItem() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Image(
+            modifier = Modifier.size(200.dp),
+            painter = painterResource(id = R.drawable.error_24),
+            contentDescription = "error",
+        )
+        Text(
+            modifier = Modifier
+                .padding(8.dp),
+            text = "Request Error!",
+            fontSize = 24.sp
+        )
+    }
 }

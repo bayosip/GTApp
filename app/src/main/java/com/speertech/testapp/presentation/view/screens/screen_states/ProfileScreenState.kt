@@ -1,11 +1,10 @@
 package com.speertech.testapp.presentation.view.screens.screen_states
 
-import androidx.paging.PagingData
 import com.speertech.testapp.model.FollowModel
 import com.speertech.testapp.model.User
-import kotlinx.coroutines.flow.Flow
 
-data class SearchScreenState(
+data class ProfileScreenState(
+    val follows: List<FollowModel>? = null,
+    val user: User? = null,
     val isLoading: Boolean = false,
-    val pagingData: Flow<PagingData<FollowModel>>?=null,
 )

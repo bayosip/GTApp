@@ -2,9 +2,9 @@ package com.speertech.testapp.model
 
 import com.google.gson.annotations.SerializedName
 
-data class SearchResults(
+data class GHSearchResults(
     @SerializedName("total_count")
-    val totalCount: Int,
+    val totalCount: Long,
     @SerializedName("incomplete_results")
     val incompleteResults: Boolean,
     @SerializedName("items")

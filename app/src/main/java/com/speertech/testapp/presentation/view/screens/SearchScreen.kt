@@ -1,7 +1,6 @@
 package com.speertech.testapp.presentation.view.screens
 
 import android.util.Log
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,10 +9,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,26 +24,37 @@ import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.speertech.testapp.model.FollowModel
 import com.speertech.testapp.presentation.view.screens.screen_states.SearchScreenState
-import com.speertech.testapp.presentation.view.ui_components.SearchResultListItem
+import com.speertech.testapp.presentation.view.toolbar.ExpandedTopBar
+import com.speertech.testapp.presentation.view.ui_components.ErrorItem
+import com.speertech.testapp.presentation.view.ui_components.UserResultListItem
 
 @Composable
 fun SearchScreen(
     navigateToUserScreen: (user: String) -> Unit = {},
     hasSearchStarted: State<Boolean>,
-    screenState: State<SearchScreenState>,
+    searchScreenState: State<SearchScreenState>,
+    searchAction: (username: String) -> Unit,
 ) {
     Log.d("TAG", "SearchScreen: ${hasSearchStarted.value}")
+    val input = remember {
+        mutableStateOf("")
+    }
 
-    AnimatedVisibility(visible = hasSearchStarted.value) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        ExpandedTopBar(
+            input = input,
+            action = searchAction,
+            searchStarted = hasSearchStarted,
+        )
+        if (hasSearchStarted.value) {
             SearchResultList(
-                screenState = screenState,
+                searchScreenState = searchScreenState,
                 onClick = navigateToUserScreen
             )
         }
@@ -50,18 +63,22 @@ fun SearchScreen(
 
 @Composable
 fun SearchResultList(
-    screenState: State<SearchScreenState>,
+    searchScreenState: State<SearchScreenState>,
     onClick: (username: String) -> Unit,
 ) {
-    val data = screenState.value.pagingData?.collectAsLazyPagingItems()
-    LazyColumn {
+    val data = searchScreenState.value.pagingData?.collectAsLazyPagingItems()
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
         items(
-            items = data?.itemSnapshotList?.items ?: emptyList(),
+            items = data?.itemSnapshotList?.items?.toSet()?.toList() ?: emptyList(),
             key = { item: FollowModel ->
-                item.id
+                try {
+                    item.id
+                } catch (e: IllegalArgumentException) {
+                    Log.e("TAG", "SearchResultList: ", e)
+                }
             }
         ) {
-            SearchResultListItem(
+            UserResultListItem(
                 item = it,
                 onItemClicked = onClick,
             )
@@ -70,7 +87,10 @@ fun SearchResultList(
         when (val state = data?.loadState?.refresh) { //FIRST LOAD
             is LoadState.Error -> {
                 //TODO Error Item
-                //state.error to get error message
+                if (data.itemSnapshotList.items.isEmpty())
+                    item {
+                        ErrorItem()
+                    }
             }
 
             is LoadState.Loading -> { // Loading UI
@@ -97,7 +117,10 @@ fun SearchResultList(
         when (val state = data?.loadState?.append) { // Pagination
             is LoadState.Error -> {
                 //TODO Pagination Error Item
-                //state.error to get error message
+                if (data.itemSnapshotList.items.isEmpty())
+                    item {
+                        ErrorItem()
+                    }
             }
 
             is LoadState.Loading -> { // Pagination Loading UI
